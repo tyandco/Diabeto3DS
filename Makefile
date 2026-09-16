@@ -24,7 +24,7 @@ export CFLAGS   = -g -Wall -O2 -mword-relocations -ffunction-sections $(ARCH) $(
 export CXXFLAGS = $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++17
 export ASFLAGS  := -g $(ARCH)
 export LDFLAGS  := -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
-export LIBS     := -lctru -lm
+export LIBS     := -lcitro2d -lcitro3d -lctru -lm
 LIBDIRS         := $(CTRULIB)
 
 ifneq ($(BUILD),$(notdir $(CURDIR)))

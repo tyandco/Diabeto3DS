@@ -158,12 +158,9 @@ int main(void) {
     Prediction prediction = calculate_prediction(&state.profile);
     const char* tip = pick_tip(&state, &prediction);
     ui_render(&state, &prediction, tip, status);
-
-    gfxFlushBuffers();
-    gfxSwapBuffers();
-    gspWaitForVBlank();
   }
 
+  ui_exit();
   gfxExit();
   return 0;
 }
