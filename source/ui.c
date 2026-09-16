@@ -66,7 +66,7 @@ static void draw_bottom_nav(const char* status) {
 }
 
 static void draw_profile_fields(const AppState* state) {
-  const Profile* profile = &state->profile;
+  const DiabetoProfile* profile = &state->profile;
   const char* cursor[7] = {" ", " ", " ", " ", " ", " ", " "};
   cursor[state->selectedField % 7] = ">";
 

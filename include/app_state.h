@@ -38,7 +38,7 @@ typedef struct {
   ActivityLevel activity;
   SugarLevel sugar;
   bool familyHistory;
-} Profile;
+} DiabetoProfile;
 
 typedef struct {
   int glucoseMgDl;
@@ -58,7 +58,7 @@ typedef struct {
 
 typedef struct {
   uint32_t version;
-  Profile profile;
+  DiabetoProfile profile;
   DailyLog log;
   int selectedField;
   int tipIndex;
@@ -69,4 +69,3 @@ void app_state_init(AppState* state);
 const char* activity_label(ActivityLevel level);
 const char* sugar_label(SugarLevel level);
 const char* risk_label(RiskLevel level);
-

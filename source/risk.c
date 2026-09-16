@@ -6,7 +6,7 @@ static int clamp_int(int value, int min, int max) {
   return value;
 }
 
-Prediction calculate_prediction(const Profile* profile) {
+Prediction calculate_prediction(const DiabetoProfile* profile) {
   Prediction prediction;
   const float heightMeters = profile->heightCm > 0 ? profile->heightCm / 100.0f : 1.70f;
   prediction.bmi = profile->weightKg / (heightMeters * heightMeters);
@@ -43,4 +43,3 @@ Prediction calculate_prediction(const Profile* profile) {
 
   return prediction;
 }
-

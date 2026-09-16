@@ -37,6 +37,12 @@ CFILES          := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES        := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES          := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 
+ifeq ($(strip $(CPPFILES)),)
+export LD       := $(CC)
+else
+export LD       := $(CXX)
+endif
+
 export OFILES   := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
 export INCLUDE  := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
                    $(foreach dir,$(LIBDIRS),-I$(dir)/include) \
@@ -44,7 +50,7 @@ export INCLUDE  := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 
 export _3DSXFLAGS += --smdh=$(CURDIR)/$(TARGET).smdh
-export SMDHFLAGS  := --create "$(APP_TITLE)" "$(APP_DESC)" "$(APP_AUTHOR)" $(CURDIR)/$(TARGET).smdh
+export SMDHFLAGS  := --create "$(APP_TITLE)" "$(APP_DESC)" "$(APP_AUTHOR)" $(CTRULIB)/default_icon.png $(CURDIR)/$(TARGET).smdh
 
 ifneq ($(strip $(ROMFS)),)
 export _3DSXFLAGS += --romfs=$(CURDIR)/$(ROMFS)

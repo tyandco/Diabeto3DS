@@ -7,7 +7,7 @@
 #include "tips.h"
 #include "ui.h"
 
-static void clamp_profile(Profile* profile) {
+static void clamp_profile(DiabetoProfile* profile) {
   if (profile->age < 1) profile->age = 1;
   if (profile->age > 120) profile->age = 120;
   if (profile->heightCm < 80) profile->heightCm = 80;
@@ -31,7 +31,7 @@ static void clamp_log(DailyLog* log) {
   if (log->balancedMeals > 6) log->balancedMeals = 6;
 }
 
-static void adjust_profile(Profile* profile, int field, int delta) {
+static void adjust_profile(DiabetoProfile* profile, int field, int delta) {
   switch (field % 7) {
     case 0:
       profile->age += delta;
@@ -167,4 +167,3 @@ int main(void) {
   gfxExit();
   return 0;
 }
-

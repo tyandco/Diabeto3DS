@@ -2,5 +2,4 @@
 
 #include "app_state.h"
 
-Prediction calculate_prediction(const Profile* profile);
-
+Prediction calculate_prediction(const DiabetoProfile* profile);
