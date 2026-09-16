@@ -28,17 +28,19 @@ static const Tip TIPS[] = {
 };
 
 static int tip_matches(const Tip* tip, const AppState* state, const Prediction* prediction) {
+  const DailyLog* log = &state->logs[state->currentLogIndex];
+
   switch (tip->kind) {
     case TIP_FOOD:
-      return state->profile.sugar == SUGAR_OFTEN || state->log.balancedMeals < 2;
+      return state->profile.sugar == SUGAR_OFTEN || log->balancedMeals < 2;
     case TIP_ACTIVITY:
-      return state->profile.activity == ACTIVITY_LOW || state->log.activityMinutes < 25;
+      return state->profile.activity == ACTIVITY_LOW || log->activityMinutes < 25;
     case TIP_SLEEP:
-      return state->log.sleepHours > 0 && state->log.sleepHours < 7;
+      return log->sleepHours > 0 && log->sleepHours < 7;
     case TIP_WATER:
-      return state->log.waterCups > 0 && state->log.waterCups < 6;
+      return log->waterCups > 0 && log->waterCups < 6;
     case TIP_GLUCOSE:
-      return state->profile.glucoseMgDl >= 100 || state->log.glucoseMgDl >= 100;
+      return state->profile.glucoseMgDl >= 100 || log->glucoseMgDl >= 100;
     case TIP_GENERAL:
     default:
       return prediction->score < 100;
@@ -63,4 +65,3 @@ void advance_tip(AppState* state) {
   const int count = (int)(sizeof(TIPS) / sizeof(TIPS[0]));
   state->tipIndex = (state->tipIndex + 1) % count;
 }
-

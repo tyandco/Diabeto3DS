@@ -9,15 +9,21 @@ void app_state_init(AppState* state) {
   state->profile.activity = ACTIVITY_MEDIUM;
   state->profile.sugar = SUGAR_SOMETIMES;
   state->profile.familyHistory = false;
+  state->profile.hasMii = false;
+  state->profile.miiShirtColor = 0;
+  state->profile.miiName[0] = '\0';
 
-  state->log.glucoseMgDl = 95;
-  state->log.activityMinutes = 30;
-  state->log.sleepHours = 8;
-  state->log.waterCups = 6;
-  state->log.balancedMeals = 2;
-  state->log.streakDays = 0;
-  state->log.lastLogDay = 0;
+  for (int index = 0; index < DIABETO_LOG_DAYS; index++) {
+    state->logs[index].glucoseMgDl = 95;
+    state->logs[index].activityMinutes = 30;
+    state->logs[index].sleepHours = 8;
+    state->logs[index].waterCups = 6;
+    state->logs[index].balancedMeals = 2;
+    state->logs[index].streakDays = 0;
+    state->logs[index].lastLogDay = index;
+  }
 
+  state->currentLogIndex = 0;
   state->selectedField = 0;
   state->tipIndex = 0;
   state->screen = SCREEN_DASHBOARD;
@@ -58,4 +64,3 @@ const char* risk_label(RiskLevel level) {
       return "Low";
   }
 }
-

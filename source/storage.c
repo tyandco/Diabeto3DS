@@ -23,6 +23,7 @@ bool load_app_state(AppState* state) {
 
   *state = loaded;
   state->screen = SCREEN_DASHBOARD;
+  state->currentLogIndex = 0;
   state->selectedField = 0;
   return true;
 }
@@ -47,4 +48,3 @@ bool save_app_state(const AppState* state) {
 
   return writeCount == 1;
 }
-

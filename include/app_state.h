@@ -3,7 +3,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define DIABETO_SAVE_VERSION 1
+#define DIABETO_SAVE_VERSION 3
+#define DIABETO_LOG_DAYS 14
 
 typedef enum {
   SCREEN_DASHBOARD = 0,
@@ -38,6 +39,9 @@ typedef struct {
   ActivityLevel activity;
   SugarLevel sugar;
   bool familyHistory;
+  bool hasMii;
+  int miiShirtColor;
+  char miiName[36];
 } DiabetoProfile;
 
 typedef struct {
@@ -59,7 +63,8 @@ typedef struct {
 typedef struct {
   uint32_t version;
   DiabetoProfile profile;
-  DailyLog log;
+  DailyLog logs[DIABETO_LOG_DAYS];
+  int currentLogIndex;
   int selectedField;
   int tipIndex;
   Screen screen;

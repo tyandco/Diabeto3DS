@@ -27,6 +27,23 @@ static u32 risk_color(RiskLevel level) {
   return COLOR_PRIMARY;
 }
 
+static u32 mii_shirt_color(int color) {
+  switch (color < 0 ? 0 : color % 12) {
+    case 0: return C2D_Color32(0xD7, 0x45, 0x45, 0xFF);
+    case 1: return C2D_Color32(0xFF, 0x7A, 0x59, 0xFF);
+    case 2: return C2D_Color32(0xF1, 0xC2, 0x40, 0xFF);
+    case 3: return C2D_Color32(0x45, 0xAD, 0x6A, 0xFF);
+    case 4: return C2D_Color32(0x0F, 0x9F, 0x9A, 0xFF);
+    case 5: return C2D_Color32(0x35, 0x79, 0xC9, 0xFF);
+    case 6: return C2D_Color32(0x7E, 0x5A, 0xC7, 0xFF);
+    case 7: return C2D_Color32(0xE5, 0x7B, 0xB8, 0xFF);
+    case 8: return C2D_Color32(0x8D, 0x6A, 0x4E, 0xFF);
+    case 9: return C2D_Color32(0x33, 0x38, 0x3F, 0xFF);
+    case 10: return C2D_Color32(0xB9, 0xC2, 0xC7, 0xFF);
+    default: return C2D_Color32(0xFF, 0xFF, 0xFA, 0xFF);
+  }
+}
+
 static void draw_text(const char* value, float x, float y, float scale, u32 color) {
   C2D_Text text;
   C2D_TextParse(&text, textBuffer, value);
@@ -44,6 +61,20 @@ static void draw_text_wrap(const char* value, float x, float y, float scale, u32
 static void draw_label_value(const char* label, const char* value, float x, float y) {
   draw_text(label, x, y, 0.46f, COLOR_MUTED);
   draw_text(value, x, y + 15.0f, 0.58f, COLOR_TEXT);
+}
+
+static void format_log_day(const AppState* state, char* buffer, size_t size) {
+  if (state->currentLogIndex == 0) {
+    snprintf(buffer, size, "Today");
+    return;
+  }
+
+  if (state->currentLogIndex == 1) {
+    snprintf(buffer, size, "Yesterday");
+    return;
+  }
+
+  snprintf(buffer, size, "%d days ago", state->currentLogIndex);
 }
 
 static void draw_card(float x, float y, float w, float h) {
@@ -66,13 +97,33 @@ static void draw_ribbon_face(float x, float y) {
   C2D_DrawCircleSolid(x + 15.0f, y + 13.0f, 0.5f, 5.0f, COLOR_ACCENT);
 }
 
+static void draw_mii_badge(const DiabetoProfile* profile, float x, float y, float radius) {
+  const u32 shirtColor = profile->hasMii ? mii_shirt_color(profile->miiShirtColor) : COLOR_PRIMARY;
+
+  C2D_DrawCircleSolid(x, y, 0.6f, radius, shirtColor);
+  C2D_DrawCircleSolid(x, y - radius * 0.18f, 0.7f, radius * 0.56f, C2D_Color32(0xF2, 0xC9, 0x9B, 0xFF));
+  C2D_DrawCircleSolid(x - radius * 0.23f, y - radius * 0.22f, 0.8f, radius * 0.07f, COLOR_TEXT);
+  C2D_DrawCircleSolid(x + radius * 0.23f, y - radius * 0.22f, 0.8f, radius * 0.07f, COLOR_TEXT);
+  C2D_DrawRectSolid(x - radius * 0.18f, y + radius * 0.06f, 0.8f, radius * 0.36f, radius * 0.06f, COLOR_TEXT);
+}
+
 static void draw_top_dashboard(const AppState* state, const Prediction* prediction, const char* tip) {
   char buffer[96];
   const u32 riskColor = risk_color(prediction->level);
+  const DiabetoProfile* profile = &state->profile;
+  const DailyLog* log = &state->logs[state->currentLogIndex];
+  char dayLabel[32];
+
+  format_log_day(state, dayLabel, sizeof(dayLabel));
 
   draw_text("Diabeto", 18.0f, 14.0f, 0.95f, COLOR_TEXT);
   draw_text("3DS offline companion", 20.0f, 43.0f, 0.45f, COLOR_MUTED);
-  draw_ribbon_face(358.0f, 35.0f);
+  if (profile->hasMii) {
+    draw_mii_badge(profile, 358.0f, 35.0f, 20.0f);
+    draw_text(profile->miiName, 306.0f, 59.0f, 0.38f, COLOR_MUTED);
+  } else {
+    draw_ribbon_face(358.0f, 35.0f);
+  }
 
   draw_card(18.0f, 72.0f, 364.0f, 72.0f);
   draw_text("Risk prediction", 34.0f, 84.0f, 0.52f, COLOR_MUTED);
@@ -83,10 +134,10 @@ static void draw_top_dashboard(const AppState* state, const Prediction* predicti
   draw_progress(34.0f, 130.0f, 316.0f, 7.0f, prediction->score, riskColor);
 
   draw_card(18.0f, 154.0f, 175.0f, 66.0f);
-  draw_text("Today", 34.0f, 164.0f, 0.52f, COLOR_MUTED);
-  snprintf(buffer, sizeof(buffer), "%d mg/dL  %d min", state->log.glucoseMgDl, state->log.activityMinutes);
+  draw_text(dayLabel, 34.0f, 164.0f, 0.52f, COLOR_MUTED);
+  snprintf(buffer, sizeof(buffer), "%d mg/dL  %d min", log->glucoseMgDl, log->activityMinutes);
   draw_text(buffer, 34.0f, 184.0f, 0.52f, COLOR_TEXT);
-  snprintf(buffer, sizeof(buffer), "%d h sleep  %d cups", state->log.sleepHours, state->log.waterCups);
+  snprintf(buffer, sizeof(buffer), "%d h sleep  %d cups", log->sleepHours, log->waterCups);
   draw_text(buffer, 34.0f, 202.0f, 0.48f, COLOR_TEXT);
 
   draw_card(205.0f, 154.0f, 177.0f, 66.0f);
@@ -94,40 +145,58 @@ static void draw_top_dashboard(const AppState* state, const Prediction* predicti
   draw_text_wrap(tip, 221.0f, 183.0f, 0.42f, COLOR_TEXT, 145.0f);
 }
 
-static void draw_top_profile(const Prediction* prediction) {
+static void draw_top_profile(const AppState* state, const Prediction* prediction) {
   char buffer[96];
   const u32 riskColor = risk_color(prediction->level);
+  const DiabetoProfile* profile = &state->profile;
 
   draw_text("Risk Setup", 18.0f, 14.0f, 0.9f, COLOR_TEXT);
-  draw_text("Tune profile values with the D-Pad.", 20.0f, 45.0f, 0.46f, COLOR_MUTED);
+  draw_text("Link a Mii, then tune your risk factors.", 20.0f, 45.0f, 0.46f, COLOR_MUTED);
 
-  draw_card(24.0f, 76.0f, 352.0f, 92.0f);
+  draw_card(20.0f, 76.0f, 132.0f, 122.0f);
+  draw_mii_badge(profile, 86.0f, 119.0f, 28.0f);
+  draw_text(profile->hasMii ? profile->miiName : "No Mii linked", 38.0f, 158.0f, 0.48f, COLOR_TEXT);
+  draw_text("Press A to choose", 39.0f, 178.0f, 0.38f, COLOR_MUTED);
+
+  draw_card(166.0f, 76.0f, 214.0f, 122.0f);
   snprintf(buffer, sizeof(buffer), "%s risk", risk_label(prediction->level));
-  draw_text(buffer, 42.0f, 92.0f, 0.72f, riskColor);
+  draw_text(buffer, 184.0f, 92.0f, 0.64f, riskColor);
   snprintf(buffer, sizeof(buffer), "%d / 100", prediction->score);
-  draw_text(buffer, 42.0f, 122.0f, 0.72f, COLOR_TEXT);
+  draw_text(buffer, 184.0f, 121.0f, 0.74f, COLOR_TEXT);
   snprintf(buffer, sizeof(buffer), "BMI %.1f", prediction->bmi);
-  draw_text(buffer, 262.0f, 122.0f, 0.58f, COLOR_TEXT);
-  draw_progress(42.0f, 150.0f, 292.0f, 7.0f, prediction->score, riskColor);
+  draw_text(buffer, 294.0f, 125.0f, 0.5f, COLOR_TEXT);
+  draw_progress(184.0f, 155.0f, 164.0f, 7.0f, prediction->score, riskColor);
 
-  draw_text("Up/Down selects. Left/Right changes.", 34.0f, 194.0f, 0.47f, COLOR_MUTED);
+  draw_text("Bottom screen: Up/Down selects, Left/Right changes.", 34.0f, 212.0f, 0.43f, COLOR_MUTED);
 }
 
 static void draw_top_log(const AppState* state) {
   char buffer[80];
+  const int selected = state->selectedField % 5;
+  const DailyLog* log = &state->logs[state->currentLogIndex];
+  char dayLabel[32];
+
+  format_log_day(state, dayLabel, sizeof(dayLabel));
 
   draw_text("Daily Log", 18.0f, 14.0f, 0.9f, COLOR_TEXT);
-  draw_text("Today's health snapshot stays on your SD card.", 20.0f, 45.0f, 0.44f, COLOR_MUTED);
-  draw_card(28.0f, 80.0f, 344.0f, 112.0f);
+  snprintf(buffer, sizeof(buffer), "%s  -  L/R switches days, A edits.", dayLabel);
+  draw_text(buffer, 20.0f, 45.0f, 0.44f, COLOR_MUTED);
 
-  snprintf(buffer, sizeof(buffer), "%d mg/dL", state->log.glucoseMgDl);
-  draw_label_value("Glucose", buffer, 50.0f, 98.0f);
-  snprintf(buffer, sizeof(buffer), "%d min", state->log.activityMinutes);
-  draw_label_value("Activity", buffer, 190.0f, 98.0f);
-  snprintf(buffer, sizeof(buffer), "%d h", state->log.sleepHours);
-  draw_label_value("Sleep", buffer, 50.0f, 146.0f);
-  snprintf(buffer, sizeof(buffer), "%d cups", state->log.waterCups);
-  draw_label_value("Water", buffer, 190.0f, 146.0f);
+  draw_card(20.0f, 76.0f, 170.0f, 68.0f);
+  draw_card(210.0f, 76.0f, 170.0f, 68.0f);
+  draw_card(20.0f, 156.0f, 170.0f, 58.0f);
+  draw_card(210.0f, 156.0f, 170.0f, 58.0f);
+
+  snprintf(buffer, sizeof(buffer), "%d mg/dL", log->glucoseMgDl);
+  draw_label_value(selected == 0 ? "> Glucose" : "Glucose", buffer, 38.0f, 92.0f);
+  snprintf(buffer, sizeof(buffer), "%d min", log->activityMinutes);
+  draw_label_value(selected == 1 ? "> Activity" : "Activity", buffer, 228.0f, 92.0f);
+  snprintf(buffer, sizeof(buffer), "%d h", log->sleepHours);
+  draw_label_value(selected == 2 ? "> Sleep" : "Sleep", buffer, 38.0f, 172.0f);
+  snprintf(buffer, sizeof(buffer), "%d cups", log->waterCups);
+  draw_label_value(selected == 3 ? "> Water" : "Water", buffer, 228.0f, 172.0f);
+  snprintf(buffer, sizeof(buffer), "%d balanced meals", log->balancedMeals);
+  draw_text(buffer, 38.0f, 132.0f, 0.4f, selected == 4 ? COLOR_PRIMARY_DARK : COLOR_MUTED);
 }
 
 static void draw_top_tips(const char* tip) {
@@ -146,44 +215,50 @@ static void draw_button(float x, float y, float w, const char* label, bool activ
 
 static void draw_field(float y, const char* label, const char* value, bool selected) {
   char line[80];
-  C2D_DrawRectSolid(18.0f, y, 0.25f, 284.0f, 22.0f, selected ? COLOR_CARD_ALT : COLOR_CARD);
+  C2D_DrawRectSolid(18.0f, y, 0.25f, 284.0f, 20.0f, selected ? COLOR_CARD_ALT : COLOR_CARD);
   snprintf(line, sizeof(line), "%s  %s", label, value);
-  draw_text(line, 27.0f, y + 5.0f, 0.43f, selected ? COLOR_PRIMARY_DARK : COLOR_TEXT);
+  draw_text(line, 27.0f, y + 4.0f, 0.4f, selected ? COLOR_PRIMARY_DARK : COLOR_TEXT);
 }
 
 static void draw_profile_fields(const AppState* state) {
   char value[32];
   const DiabetoProfile* profile = &state->profile;
-  const int selected = state->selectedField % 7;
+  const int selected = state->selectedField % 8;
 
-  snprintf(value, sizeof(value), "%d", profile->age);
-  draw_field(43.0f, "Age", value, selected == 0);
+  draw_field(42.0f, "Mii", profile->hasMii ? profile->miiName : "Press A to choose", selected == 7);
+  snprintf(value, sizeof(value), "%d years", profile->age);
+  draw_field(65.0f, "Age", value, selected == 0);
   snprintf(value, sizeof(value), "%d cm", profile->heightCm);
-  draw_field(68.0f, "Height", value, selected == 1);
+  draw_field(88.0f, "Height", value, selected == 1);
   snprintf(value, sizeof(value), "%d kg", profile->weightKg);
-  draw_field(93.0f, "Weight", value, selected == 2);
+  draw_field(111.0f, "Weight", value, selected == 2);
   snprintf(value, sizeof(value), "%d mg/dL", profile->glucoseMgDl);
-  draw_field(118.0f, "Glucose", value, selected == 3);
-  draw_field(143.0f, "Activity", activity_label(profile->activity), selected == 4);
-  draw_field(168.0f, "Sugar", sugar_label(profile->sugar), selected == 5);
-  draw_field(193.0f, "Family", profile->familyHistory ? "Yes" : "No", selected == 6);
+  draw_field(134.0f, "Glucose", value, selected == 3);
+  draw_field(157.0f, "Activity", activity_label(profile->activity), selected == 4);
+  draw_field(180.0f, "Sugar", sugar_label(profile->sugar), selected == 5);
+  draw_field(203.0f, "Family history", profile->familyHistory ? "Yes" : "No", selected == 6);
 }
 
 static void draw_log_fields(const AppState* state) {
   char value[32];
-  const DailyLog* log = &state->log;
+  const DailyLog* log = &state->logs[state->currentLogIndex];
   const int selected = state->selectedField % 5;
+  char dayLabel[32];
 
+  format_log_day(state, dayLabel, sizeof(dayLabel));
+  draw_text(dayLabel, 224.0f, 13.0f, 0.42f, COLOR_PRIMARY_DARK);
   snprintf(value, sizeof(value), "%d mg/dL", log->glucoseMgDl);
-  draw_field(55.0f, "Glucose", value, selected == 0);
+  draw_text("Use this after meals, exercise, or before bed.", 18.0f, 43.0f, 0.37f, COLOR_MUTED);
+  draw_field(66.0f, "Glucose", value, selected == 0);
   snprintf(value, sizeof(value), "%d min", log->activityMinutes);
-  draw_field(84.0f, "Activity", value, selected == 1);
+  draw_field(92.0f, "Activity", value, selected == 1);
   snprintf(value, sizeof(value), "%d h", log->sleepHours);
-  draw_field(113.0f, "Sleep", value, selected == 2);
+  draw_field(118.0f, "Sleep", value, selected == 2);
   snprintf(value, sizeof(value), "%d cups", log->waterCups);
-  draw_field(142.0f, "Water", value, selected == 3);
+  draw_field(144.0f, "Water", value, selected == 3);
   snprintf(value, sizeof(value), "%d", log->balancedMeals);
-  draw_field(171.0f, "Meals", value, selected == 4);
+  draw_field(170.0f, "Balanced meals", value, selected == 4);
+  draw_text("Y saves this snapshot.", 23.0f, 197.0f, 0.37f, COLOR_MUTED);
 }
 
 static void draw_bottom(const AppState* state, const char* status) {
@@ -241,7 +316,7 @@ void ui_render(const AppState* state, const Prediction* prediction, const char* 
 
   switch (state->screen) {
     case SCREEN_PROFILE:
-      draw_top_profile(prediction);
+      draw_top_profile(state, prediction);
       break;
     case SCREEN_LOG:
       draw_top_log(state);
