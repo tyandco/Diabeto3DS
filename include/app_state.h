@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define DIABETO_SAVE_VERSION 3
+#define DIABETO_SAVE_VERSION 4
 #define DIABETO_LOG_DAYS 14
 
 typedef enum {
@@ -41,6 +41,38 @@ typedef struct {
   bool familyHistory;
   bool hasMii;
   int miiShirtColor;
+  int miiSkinColor;
+  int miiFaceShape;
+  int miiHairStyle;
+  int miiHairColor;
+  int miiEyeStyle;
+  int miiEyeColor;
+  int miiEyeScale;
+  int miiEyeYScale;
+  int miiEyeSpacing;
+  int miiEyeYPosition;
+  int miiEyebrowStyle;
+  int miiEyebrowColor;
+  int miiEyebrowSpacing;
+  int miiEyebrowYPosition;
+  int miiNoseStyle;
+  int miiNoseScale;
+  int miiNoseYPosition;
+  int miiMouthStyle;
+  int miiMouthColor;
+  int miiMouthScale;
+  int miiMouthYScale;
+  int miiMustacheStyle;
+  int miiBeardStyle;
+  int miiBeardColor;
+  int miiGlassesStyle;
+  int miiGlassesColor;
+  int miiGlassesScale;
+  int miiGlassesYPosition;
+  bool miiMoleEnabled;
+  int miiMoleScale;
+  int miiMoleXPosition;
+  int miiMoleYPosition;
   char miiName[36];
 } DiabetoProfile;
 

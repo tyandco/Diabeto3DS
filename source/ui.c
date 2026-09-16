@@ -44,6 +44,41 @@ static u32 mii_shirt_color(int color) {
   }
 }
 
+static u32 mii_skin_color(int color) {
+  switch (color < 0 ? 0 : color % 6) {
+    case 0: return C2D_Color32(0xF6, 0xD3, 0xA5, 0xFF);
+    case 1: return C2D_Color32(0xF0, 0xBD, 0x83, 0xFF);
+    case 2: return C2D_Color32(0xD9, 0x98, 0x61, 0xFF);
+    case 3: return C2D_Color32(0xB8, 0x73, 0x49, 0xFF);
+    case 4: return C2D_Color32(0x8F, 0x58, 0x3B, 0xFF);
+    default: return C2D_Color32(0x62, 0x3B, 0x2C, 0xFF);
+  }
+}
+
+static u32 mii_hair_color(int color) {
+  switch (color < 0 ? 0 : color % 8) {
+    case 0: return C2D_Color32(0x25, 0x1C, 0x17, 0xFF);
+    case 1: return C2D_Color32(0x5B, 0x35, 0x1F, 0xFF);
+    case 2: return C2D_Color32(0x95, 0x61, 0x2F, 0xFF);
+    case 3: return C2D_Color32(0xD4, 0x9A, 0x45, 0xFF);
+    case 4: return C2D_Color32(0xB2, 0xB2, 0xAA, 0xFF);
+    case 5: return C2D_Color32(0x58, 0x58, 0x58, 0xFF);
+    case 6: return C2D_Color32(0x8B, 0x2D, 0x2D, 0xFF);
+    default: return C2D_Color32(0x1B, 0x1B, 0x1B, 0xFF);
+  }
+}
+
+static u32 mii_eye_color(int color) {
+  switch (color < 0 ? 0 : color % 6) {
+    case 1: return C2D_Color32(0x3A, 0x6E, 0xBA, 0xFF);
+    case 2: return C2D_Color32(0x38, 0x86, 0x54, 0xFF);
+    case 3: return C2D_Color32(0x78, 0x52, 0x2B, 0xFF);
+    case 4: return C2D_Color32(0x54, 0x54, 0x54, 0xFF);
+    case 5: return C2D_Color32(0x82, 0x54, 0x9E, 0xFF);
+    default: return COLOR_TEXT;
+  }
+}
+
 static void draw_text(const char* value, float x, float y, float scale, u32 color) {
   C2D_Text text;
   C2D_TextParse(&text, textBuffer, value);
@@ -99,12 +134,81 @@ static void draw_ribbon_face(float x, float y) {
 
 static void draw_mii_badge(const DiabetoProfile* profile, float x, float y, float radius) {
   const u32 shirtColor = profile->hasMii ? mii_shirt_color(profile->miiShirtColor) : COLOR_PRIMARY;
+  const u32 skinColor = profile->hasMii ? mii_skin_color(profile->miiSkinColor) : C2D_Color32(0xF2, 0xC9, 0x9B, 0xFF);
+  const u32 hairColor = profile->hasMii ? mii_hair_color(profile->miiHairColor) : COLOR_TEXT;
+  const u32 eyeColor = profile->hasMii ? mii_eye_color(profile->miiEyeColor) : COLOR_TEXT;
+  const float faceWidth = radius * (profile->hasMii ? 0.9f + (profile->miiFaceShape % 4) * 0.05f : 1.0f);
+  const float faceHeight = radius * (profile->hasMii ? 0.98f + (profile->miiFaceShape % 3) * 0.05f : 1.0f);
+  const float eyeSpacing = radius * (0.22f + (profile->miiEyeSpacing % 8) * 0.018f);
+  const float eyeY = y - radius * (0.28f - (profile->miiEyeYPosition % 18) * 0.008f);
+  const float eyeScale = radius * (0.055f + (profile->miiEyeScale % 8) * 0.007f);
+  const float eyeHeight = eyeScale * (0.7f + (profile->miiEyeYScale % 5) * 0.12f);
+  const float browSpacing = radius * (0.24f + (profile->miiEyebrowSpacing % 8) * 0.018f);
+  const float browY = y - radius * (0.5f - (profile->miiEyebrowYPosition % 18) * 0.01f);
+  const float noseY = y - radius * (0.05f - (profile->miiNoseYPosition % 18) * 0.01f);
+  const float noseScale = radius * (0.07f + (profile->miiNoseScale % 8) * 0.01f);
+  const float mouthScale = radius * (0.18f + (profile->miiMouthScale % 8) * 0.018f);
+  const float mouthHeight = radius * (0.035f + (profile->miiMouthYScale % 5) * 0.012f);
+  const bool smiling = (profile->miiMouthStyle % 4) < 2;
 
   C2D_DrawCircleSolid(x, y, 0.6f, radius, shirtColor);
-  C2D_DrawCircleSolid(x, y - radius * 0.18f, 0.7f, radius * 0.56f, C2D_Color32(0xF2, 0xC9, 0x9B, 0xFF));
-  C2D_DrawCircleSolid(x - radius * 0.23f, y - radius * 0.22f, 0.8f, radius * 0.07f, COLOR_TEXT);
-  C2D_DrawCircleSolid(x + radius * 0.23f, y - radius * 0.22f, 0.8f, radius * 0.07f, COLOR_TEXT);
-  C2D_DrawRectSolid(x - radius * 0.18f, y + radius * 0.06f, 0.8f, radius * 0.36f, radius * 0.06f, COLOR_TEXT);
+  C2D_DrawEllipseSolid(x, y - radius * 0.12f, 0.7f, faceWidth * 0.58f, faceHeight * 0.66f, skinColor);
+
+  C2D_DrawEllipseSolid(x, y - radius * 0.48f, 0.8f, faceWidth * 0.55f, radius * (0.18f + (profile->miiHairStyle % 5) * 0.02f), hairColor);
+  if ((profile->miiHairStyle % 3) == 1) {
+    C2D_DrawCircleSolid(x - radius * 0.34f, y - radius * 0.3f, 0.8f, radius * 0.13f, hairColor);
+    C2D_DrawCircleSolid(x + radius * 0.34f, y - radius * 0.3f, 0.8f, radius * 0.13f, hairColor);
+  } else if ((profile->miiHairStyle % 3) == 2) {
+    C2D_DrawTriangle(
+      x - radius * 0.45f, y - radius * 0.4f, hairColor,
+      x - radius * 0.05f, y - radius * 0.66f, hairColor,
+      x + radius * 0.36f, y - radius * 0.38f, hairColor,
+      0.8f
+    );
+  }
+
+  C2D_DrawEllipseSolid(x - eyeSpacing, eyeY, 0.9f, eyeScale, eyeHeight, eyeColor);
+  C2D_DrawEllipseSolid(x + eyeSpacing, eyeY, 0.9f, eyeScale, eyeHeight, eyeColor);
+
+  C2D_DrawRectSolid(x - browSpacing - radius * 0.08f, browY, 0.9f, radius * 0.18f, radius * 0.035f, hairColor);
+  C2D_DrawRectSolid(x + browSpacing - radius * 0.08f, browY, 0.9f, radius * 0.18f, radius * 0.035f, hairColor);
+
+  if ((profile->miiNoseStyle % 3) == 0) {
+    C2D_DrawTriangle(x, noseY - noseScale, COLOR_MUTED, x - noseScale * 0.5f, noseY + noseScale, COLOR_MUTED, x + noseScale * 0.5f, noseY + noseScale, COLOR_MUTED, 0.9f);
+  } else {
+    C2D_DrawEllipseSolid(x, noseY, 0.9f, noseScale * 0.55f, noseScale, COLOR_MUTED);
+  }
+
+  if (smiling) {
+    C2D_DrawRectSolid(x - mouthScale * 0.5f, y + radius * 0.28f, 0.9f, mouthScale, mouthHeight, profile->miiMouthColor ? COLOR_DANGER : COLOR_TEXT);
+    C2D_DrawCircleSolid(x - mouthScale * 0.5f, y + radius * 0.26f, 0.91f, mouthHeight * 1.3f, skinColor);
+    C2D_DrawCircleSolid(x + mouthScale * 0.5f, y + radius * 0.26f, 0.91f, mouthHeight * 1.3f, skinColor);
+  } else {
+    C2D_DrawRectSolid(x - mouthScale * 0.5f, y + radius * 0.28f, 0.9f, mouthScale, mouthHeight, profile->miiMouthColor ? COLOR_DANGER : COLOR_TEXT);
+  }
+
+  if (profile->miiMustacheStyle > 0) {
+    C2D_DrawRectSolid(x - radius * 0.2f, y + radius * 0.14f, 0.9f, radius * 0.4f, radius * 0.045f, hairColor);
+  }
+
+  if (profile->miiBeardStyle > 0) {
+    C2D_DrawEllipseSolid(x, y + radius * 0.37f, 0.8f, radius * 0.28f, radius * 0.12f, mii_hair_color(profile->miiBeardColor));
+  }
+
+  if (profile->miiGlassesStyle > 0) {
+    const float glassesY = y - radius * (0.24f - (profile->miiGlassesYPosition % 18) * 0.006f);
+    const float glassesScale = radius * (0.14f + (profile->miiGlassesScale % 8) * 0.008f);
+    const u32 glassesColor = mii_eye_color(profile->miiGlassesColor);
+    C2D_DrawEllipseSolid(x - eyeSpacing, glassesY, 0.95f, glassesScale, glassesScale * 0.62f, glassesColor);
+    C2D_DrawEllipseSolid(x + eyeSpacing, glassesY, 0.95f, glassesScale, glassesScale * 0.62f, glassesColor);
+    C2D_DrawRectSolid(x - eyeSpacing, glassesY, 0.96f, eyeSpacing * 2.0f, radius * 0.025f, glassesColor);
+  }
+
+  if (profile->miiMoleEnabled) {
+    const float moleX = x - radius * 0.35f + radius * ((profile->miiMoleXPosition % 16) / 16.0f) * 0.7f;
+    const float moleY = y - radius * 0.2f + radius * ((profile->miiMoleYPosition % 16) / 16.0f) * 0.65f;
+    C2D_DrawCircleSolid(moleX, moleY, 0.95f, radius * (0.035f + (profile->miiMoleScale % 6) * 0.006f), COLOR_TEXT);
+  }
 }
 
 static void draw_top_dashboard(const AppState* state, const Prediction* prediction, const char* tip) {

@@ -105,6 +105,38 @@ static void select_profile_mii(AppState* state, char* status, size_t statusSize)
   miiSelectorReturnGetName(&result, state->profile.miiName, sizeof(state->profile.miiName));
   state->profile.hasMii = true;
   state->profile.miiShirtColor = result.mii.mii_details.shirt_color;
+  state->profile.miiSkinColor = result.mii.face_style.skinColor;
+  state->profile.miiFaceShape = result.mii.face_style.shape;
+  state->profile.miiHairStyle = result.mii.hair_style;
+  state->profile.miiHairColor = result.mii.hair_details.color;
+  state->profile.miiEyeStyle = result.mii.eye_details.style;
+  state->profile.miiEyeColor = result.mii.eye_details.color;
+  state->profile.miiEyeScale = result.mii.eye_details.scale;
+  state->profile.miiEyeYScale = result.mii.eye_details.yscale;
+  state->profile.miiEyeSpacing = result.mii.eye_details.xspacing;
+  state->profile.miiEyeYPosition = result.mii.eye_details.yposition;
+  state->profile.miiEyebrowStyle = result.mii.eyebrow_details.style;
+  state->profile.miiEyebrowColor = result.mii.eyebrow_details.color;
+  state->profile.miiEyebrowSpacing = result.mii.eyebrow_details.xspacing;
+  state->profile.miiEyebrowYPosition = result.mii.eyebrow_details.yposition;
+  state->profile.miiNoseStyle = result.mii.nose_details.style;
+  state->profile.miiNoseScale = result.mii.nose_details.scale;
+  state->profile.miiNoseYPosition = result.mii.nose_details.yposition;
+  state->profile.miiMouthStyle = result.mii.mouth_details.style;
+  state->profile.miiMouthColor = result.mii.mouth_details.color;
+  state->profile.miiMouthScale = result.mii.mouth_details.scale;
+  state->profile.miiMouthYScale = result.mii.mouth_details.yscale;
+  state->profile.miiMustacheStyle = result.mii.mustache_details.mustache_style;
+  state->profile.miiBeardStyle = result.mii.beard_details.style;
+  state->profile.miiBeardColor = result.mii.beard_details.color;
+  state->profile.miiGlassesStyle = result.mii.glasses_details.style;
+  state->profile.miiGlassesColor = result.mii.glasses_details.color;
+  state->profile.miiGlassesScale = result.mii.glasses_details.scale;
+  state->profile.miiGlassesYPosition = result.mii.glasses_details.ypos;
+  state->profile.miiMoleEnabled = result.mii.mole_details.enable;
+  state->profile.miiMoleScale = result.mii.mole_details.scale;
+  state->profile.miiMoleXPosition = result.mii.mole_details.xpos;
+  state->profile.miiMoleYPosition = result.mii.mole_details.ypos;
   snprintf(status, statusSize, "Mii linked: %s", state->profile.miiName);
 }
 
