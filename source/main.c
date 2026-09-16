@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "app_state.h"
 #include "risk.h"
@@ -83,6 +84,121 @@ static void adjust_log(DailyLog* log, int field, int delta) {
   clamp_log(log);
 }
 
+static void mii_name_to_ascii(const MiiData* mii, char* output, size_t outputSize) {
+  if (outputSize == 0) {
+    return;
+  }
+
+  size_t outIndex = 0;
+  for (int index = 0; index < 10 && outIndex + 1 < outputSize; index++) {
+    const u16 codepoint = mii->mii_name[index];
+    if (codepoint == 0) {
+      break;
+    }
+    output[outIndex++] = codepoint < 128 ? (char)codepoint : '?';
+  }
+  output[outIndex] = '\0';
+}
+
+static void apply_mii_data_to_profile(DiabetoProfile* profile, const MiiData* mii) {
+  profile->hasMii = true;
+  profile->miiShirtColor = mii->mii_details.shirt_color;
+  profile->miiSkinColor = mii->face_style.skinColor;
+  profile->miiFaceShape = mii->face_style.shape;
+  profile->miiHairStyle = mii->hair_style;
+  profile->miiHairColor = mii->hair_details.color;
+  profile->miiEyeStyle = mii->eye_details.style;
+  profile->miiEyeColor = mii->eye_details.color;
+  profile->miiEyeScale = mii->eye_details.scale;
+  profile->miiEyeYScale = mii->eye_details.yscale;
+  profile->miiEyeSpacing = mii->eye_details.xspacing;
+  profile->miiEyeYPosition = mii->eye_details.yposition;
+  profile->miiEyebrowStyle = mii->eyebrow_details.style;
+  profile->miiEyebrowColor = mii->eyebrow_details.color;
+  profile->miiEyebrowSpacing = mii->eyebrow_details.xspacing;
+  profile->miiEyebrowYPosition = mii->eyebrow_details.yposition;
+  profile->miiNoseStyle = mii->nose_details.style;
+  profile->miiNoseScale = mii->nose_details.scale;
+  profile->miiNoseYPosition = mii->nose_details.yposition;
+  profile->miiMouthStyle = mii->mouth_details.style;
+  profile->miiMouthColor = mii->mouth_details.color;
+  profile->miiMouthScale = mii->mouth_details.scale;
+  profile->miiMouthYScale = mii->mouth_details.yscale;
+  profile->miiMustacheStyle = mii->mustache_details.mustache_style;
+  profile->miiBeardStyle = mii->beard_details.style;
+  profile->miiBeardColor = mii->beard_details.color;
+  profile->miiGlassesStyle = mii->glasses_details.style;
+  profile->miiGlassesColor = mii->glasses_details.color;
+  profile->miiGlassesScale = mii->glasses_details.scale;
+  profile->miiGlassesYPosition = mii->glasses_details.ypos;
+  profile->miiMoleEnabled = mii->mole_details.enable;
+  profile->miiMoleScale = mii->mole_details.scale;
+  profile->miiMoleXPosition = mii->mole_details.xpos;
+  profile->miiMoleYPosition = mii->mole_details.ypos;
+}
+
+static void dump_account_mii_image(const AccountMiiImage* image) {
+  if (!image->available || image->size == 0) {
+    return;
+  }
+
+  mkdir("sdmc:/3ds", 0777);
+  mkdir("sdmc:/3ds/Diabeto3DS", 0777);
+
+  FILE* file = fopen("sdmc:/3ds/Diabeto3DS/account_mii_image.bin", "wb");
+  if (!file) {
+    return;
+  }
+
+  fwrite(image->data, 1, image->size, file);
+  fclose(file);
+}
+
+static void load_account_mii(AppState* state, bool applyProfile, char* status, size_t statusSize) {
+  state->accountMiiImage.available = false;
+  state->accountMiiImage.size = 0;
+
+  const Result initResult = actInit(true);
+  if (R_FAILED(initResult)) {
+    return;
+  }
+
+  bool loadedProfile = false;
+  bool loadedImage = false;
+
+  if (applyProfile) {
+    CFLStoreData accountMii;
+    const Result miiResult = ACT_GetAccountInfo(&accountMii, sizeof(accountMii), ACT_DEFAULT_ACCOUNT, INFO_TYPE_MII);
+    if (R_SUCCEEDED(miiResult)) {
+      apply_mii_data_to_profile(&state->profile, &accountMii.miiData);
+      mii_name_to_ascii(&accountMii.miiData, state->profile.miiName, sizeof(state->profile.miiName));
+      if (state->profile.miiName[0] == '\0') {
+        snprintf(state->profile.miiName, sizeof(state->profile.miiName), "Account Mii");
+      }
+      loadedProfile = true;
+    }
+  }
+
+  u32 imageSize = 0;
+  const Result imageResult = ACT_GetMiiImage(&imageSize, state->accountMiiImage.data, DIABETO_MII_IMAGE_MAX_BYTES, ACT_DEFAULT_ACCOUNT, MII_IMAGE_PRIMARY);
+  if (R_SUCCEEDED(imageResult) && imageSize > 0 && imageSize <= DIABETO_MII_IMAGE_MAX_BYTES) {
+    state->accountMiiImage.available = true;
+    state->accountMiiImage.size = imageSize;
+    dump_account_mii_image(&state->accountMiiImage);
+    loadedImage = true;
+  }
+
+  actExit();
+
+  if (loadedProfile && loadedImage) {
+    snprintf(status, statusSize, "Account Mii loaded.");
+  } else if (loadedProfile) {
+    snprintf(status, statusSize, "Account Mii avatar loaded.");
+  } else if (loadedImage) {
+    snprintf(status, statusSize, "Account Mii image cached.");
+  }
+}
+
 static void select_profile_mii(AppState* state, char* status, size_t statusSize) {
   MiiSelectorConf conf;
   MiiSelectorReturn result;
@@ -103,40 +219,7 @@ static void select_profile_mii(AppState* state, char* status, size_t statusSize)
   }
 
   miiSelectorReturnGetName(&result, state->profile.miiName, sizeof(state->profile.miiName));
-  state->profile.hasMii = true;
-  state->profile.miiShirtColor = result.mii.mii_details.shirt_color;
-  state->profile.miiSkinColor = result.mii.face_style.skinColor;
-  state->profile.miiFaceShape = result.mii.face_style.shape;
-  state->profile.miiHairStyle = result.mii.hair_style;
-  state->profile.miiHairColor = result.mii.hair_details.color;
-  state->profile.miiEyeStyle = result.mii.eye_details.style;
-  state->profile.miiEyeColor = result.mii.eye_details.color;
-  state->profile.miiEyeScale = result.mii.eye_details.scale;
-  state->profile.miiEyeYScale = result.mii.eye_details.yscale;
-  state->profile.miiEyeSpacing = result.mii.eye_details.xspacing;
-  state->profile.miiEyeYPosition = result.mii.eye_details.yposition;
-  state->profile.miiEyebrowStyle = result.mii.eyebrow_details.style;
-  state->profile.miiEyebrowColor = result.mii.eyebrow_details.color;
-  state->profile.miiEyebrowSpacing = result.mii.eyebrow_details.xspacing;
-  state->profile.miiEyebrowYPosition = result.mii.eyebrow_details.yposition;
-  state->profile.miiNoseStyle = result.mii.nose_details.style;
-  state->profile.miiNoseScale = result.mii.nose_details.scale;
-  state->profile.miiNoseYPosition = result.mii.nose_details.yposition;
-  state->profile.miiMouthStyle = result.mii.mouth_details.style;
-  state->profile.miiMouthColor = result.mii.mouth_details.color;
-  state->profile.miiMouthScale = result.mii.mouth_details.scale;
-  state->profile.miiMouthYScale = result.mii.mouth_details.yscale;
-  state->profile.miiMustacheStyle = result.mii.mustache_details.mustache_style;
-  state->profile.miiBeardStyle = result.mii.beard_details.style;
-  state->profile.miiBeardColor = result.mii.beard_details.color;
-  state->profile.miiGlassesStyle = result.mii.glasses_details.style;
-  state->profile.miiGlassesColor = result.mii.glasses_details.color;
-  state->profile.miiGlassesScale = result.mii.glasses_details.scale;
-  state->profile.miiGlassesYPosition = result.mii.glasses_details.ypos;
-  state->profile.miiMoleEnabled = result.mii.mole_details.enable;
-  state->profile.miiMoleScale = result.mii.mole_details.scale;
-  state->profile.miiMoleXPosition = result.mii.mole_details.xpos;
-  state->profile.miiMoleYPosition = result.mii.mole_details.ypos;
+  apply_mii_data_to_profile(&state->profile, &result.mii);
   snprintf(status, statusSize, "Mii linked: %s", state->profile.miiName);
 }
 
@@ -279,6 +362,7 @@ int main(void) {
   if (load_app_state(&state)) {
     snprintf(status, sizeof(status), "Save loaded.");
   }
+  load_account_mii(&state, !state.profile.hasMii, status, sizeof(status));
 
   while (aptMainLoop()) {
     hidScanInput();
