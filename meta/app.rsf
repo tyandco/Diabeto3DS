@@ -1,0 +1,38 @@
+BasicInfo:
+  Title                   : "Diabeto"
+  CompanyCode             : "00"
+  ProductCode             : "CTR-P-DIAB"
+  ContentType             : Application
+
+TitleInfo:
+  UniqueId                : 0xD1A8E7
+  Category                : Application
+
+Option:
+  UseOnSD                 : true
+  FreeProductCode         : true
+  EnableCompress          : true
+  MediaFootPadding        : false
+
+AccessControlInfo:
+  CoreVersion             : 2
+  ExtSaveDataId           : 0xD1A8E7
+  SystemMode              : 64MB
+  IdealProcessor          : 0
+  AffinityMask            : 1
+  Priority                : 16
+  MaxCpu                  : 0x9E
+  DisableDebug            : false
+  EnableForceDebug        : false
+  CanWriteSharedPage      : false
+  CanUsePrivilegedPriority: false
+  CanUseNonAlphabetAndNumber: true
+  PermitMainFunctionArgument: true
+  CanShareDeviceMemory   : false
+  RunnableOnSleep        : false
+  SpecialMemoryArrange   : false
+
+SystemControlInfo:
+  SaveDataSize            : 1MB
+  RemasterVersion         : 0
+
