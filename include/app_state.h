@@ -5,7 +5,6 @@
 
 #define DIABETO_SAVE_VERSION 5
 #define DIABETO_LOG_DAYS 14
-#define DIABETO_MII_IMAGE_MAX_BYTES 0x4000
 
 typedef enum {
   SCREEN_DASHBOARD = 0,
@@ -94,16 +93,9 @@ typedef struct {
 } Prediction;
 
 typedef struct {
-  bool available;
-  uint32_t size;
-  uint8_t data[DIABETO_MII_IMAGE_MAX_BYTES];
-} AccountMiiImage;
-
-typedef struct {
   uint32_t version;
   DiabetoProfile profile;
   DailyLog logs[DIABETO_LOG_DAYS];
-  AccountMiiImage accountMiiImage;
   int currentLogIndex;
   int selectedField;
   int tipIndex;

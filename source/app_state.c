@@ -56,8 +56,6 @@ void app_state_init(AppState* state) {
   }
 
   state->currentLogIndex = 0;
-  state->accountMiiImage.available = false;
-  state->accountMiiImage.size = 0;
   state->selectedField = 0;
   state->tipIndex = 0;
   state->screen = SCREEN_DASHBOARD;

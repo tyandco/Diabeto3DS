@@ -61,8 +61,6 @@ bool load_app_state(AppState* state) {
   apply_stored_state(&loaded, &stored);
   *state = loaded;
   state->version = DIABETO_SAVE_VERSION;
-  state->accountMiiImage.available = false;
-  state->accountMiiImage.size = 0;
   state->screen = SCREEN_DASHBOARD;
   state->currentLogIndex = 0;
   state->selectedField = 0;

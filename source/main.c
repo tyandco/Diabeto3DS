@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/stat.h>
 
 #include "app_state.h"
 #include "risk.h"
@@ -137,34 +136,13 @@ static void apply_mii_data_to_profile(DiabetoProfile* profile, const MiiData* mi
   profile->miiMoleYPosition = mii->mole_details.ypos;
 }
 
-static void dump_account_mii_image(const AccountMiiImage* image) {
-  if (!image->available || image->size == 0) {
-    return;
-  }
-
-  mkdir("sdmc:/3ds", 0777);
-  mkdir("sdmc:/3ds/Diabeto3DS", 0777);
-
-  FILE* file = fopen("sdmc:/3ds/Diabeto3DS/account_mii_image.bin", "wb");
-  if (!file) {
-    return;
-  }
-
-  fwrite(image->data, 1, image->size, file);
-  fclose(file);
-}
-
 static void load_account_mii(AppState* state, bool applyProfile, char* status, size_t statusSize) {
-  state->accountMiiImage.available = false;
-  state->accountMiiImage.size = 0;
-
   const Result initResult = actInit(true);
   if (R_FAILED(initResult)) {
     return;
   }
 
   bool loadedProfile = false;
-  bool loadedImage = false;
 
   if (applyProfile) {
     CFLStoreData accountMii;
@@ -179,23 +157,10 @@ static void load_account_mii(AppState* state, bool applyProfile, char* status, s
     }
   }
 
-  u32 imageSize = 0;
-  const Result imageResult = ACT_GetMiiImage(&imageSize, state->accountMiiImage.data, DIABETO_MII_IMAGE_MAX_BYTES, ACT_DEFAULT_ACCOUNT, MII_IMAGE_PRIMARY);
-  if (R_SUCCEEDED(imageResult) && imageSize > 0 && imageSize <= DIABETO_MII_IMAGE_MAX_BYTES) {
-    state->accountMiiImage.available = true;
-    state->accountMiiImage.size = imageSize;
-    dump_account_mii_image(&state->accountMiiImage);
-    loadedImage = true;
-  }
-
   actExit();
 
-  if (loadedProfile && loadedImage) {
-    snprintf(status, statusSize, "Account Mii loaded.");
-  } else if (loadedProfile) {
+  if (loadedProfile) {
     snprintf(status, statusSize, "Account Mii avatar loaded.");
-  } else if (loadedImage) {
-    snprintf(status, statusSize, "Account Mii image cached.");
   }
 }
 
@@ -362,7 +327,6 @@ int main(void) {
   if (load_app_state(&state)) {
     snprintf(status, sizeof(status), "Save loaded.");
   }
-  load_account_mii(&state, !state.profile.hasMii, status, sizeof(status));
 
   while (aptMainLoop()) {
     hidScanInput();
@@ -396,6 +360,9 @@ int main(void) {
     if (down & KEY_X) {
       state.screen = SCREEN_PROFILE;
       state.selectedField = 0;
+      if (!state.profile.hasMii) {
+        load_account_mii(&state, true, status, sizeof(status));
+      }
     }
 
     if (down & KEY_B) {
